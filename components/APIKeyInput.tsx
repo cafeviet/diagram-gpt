@@ -13,12 +13,13 @@ import {
 
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { apiKeyAtom, modelAtom } from "@/lib/atom";
+import { apiKeyAtom, modelAtom, openRouterAtom } from "@/lib/atom";
 import type { OpenAIModel } from "@/types/type";
 
 export const APIKeyInput = () => {
   const [apiKey, setApiKey] = useAtom(apiKeyAtom);
   const [model, setModel] = useAtom(modelAtom);
+  const [openRouter, setOpenRouter] = useAtom(openRouterAtom);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
     setApiKey(e.target.value);
@@ -30,6 +31,7 @@ export const APIKeyInput = () => {
   const handleSave = () => {
     localStorage.setItem("apiKey", apiKey);
     localStorage.setItem("model", model);
+    localStorage.setItem("openRouter", String(openRouter));
   };
 
   return (
@@ -44,6 +46,16 @@ export const APIKeyInput = () => {
           onChange={handleChange}
           className="mt-2"
         />
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="openrouter"
+            checked={openRouter}
+            onChange={(e) => setOpenRouter(e.target.checked)}
+          />
+          <label htmlFor="openrouter">Use OpenRouter</label>
+        </div>
       </div>
 
       <div className="mb-2">

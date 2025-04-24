@@ -9,6 +9,7 @@ export interface RequestBody {
   messages: Message[];
   model: OpenAIModel;
   apiKey: string;
+  useOpenRouter?: boolean;
 }
 
 export type Theme = "default" | "neutral" | "dark" | "forest" | "base";

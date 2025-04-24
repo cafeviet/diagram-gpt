@@ -116,3 +116,89 @@ export const serializeCode = (code: string) => {
   const compressed = deflate(data, { level: 9 });
   return fromUint8Array(compressed, true);
 };
+
+export const OpenRouterStream = async (
+  messages: Message[],
+  model: string,
+  key: string
+) => {
+  const system = { role: "system", content: systemPrompt };
+  const res = await fetch(`https://openrouter.ai/api/v1/chat/completions`, {
+    headers: {
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://diagram-gpt.vercel.app/",
+      "X-Title": "Diagram GPT",
+      Authorization: `Bearer ${key}`,
+    },
+    method: "POST",
+    body: JSON.stringify({
+      model,
+      messages: [system, ...messages],
+      temperature: 0,
+      stream: true,
+    }),
+  });
+
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  if (res.status !== 200) {
+    const statusText = res.statusText;
+    const result = await res.body?.getReader().read();
+    throw new Error(
+      `OpenRouter API returned an error: ${
+        decoder.decode(result?.value) || statusText
+      }`
+    );
+  }
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const onParse = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === "event") {
+          const data = event.data;
+
+          if (data === "[DONE]") {
+            controller.close();
+            return;
+          }
+
+          try {
+            const json = JSON.parse(data);
+            const text = json.choices[0].delta.content;
+            const queue = encoder.encode(text);
+            controller.enqueue(queue);
+          } catch (e) {
+            controller.error(e);
+          }
+        }
+      };
+
+      const parser = createParser(onParse);
+
+      for await (const chunk of res.body as any) {
+        parser.feed(decoder.decode(chunk));
+      }
+    },
+  });
+
+  return stream;
+};
+
+export const OpenRouterStream2 = async (
+  messages: Message[],
+  model: string,
+  key: string
+) => {
+  // TODO: Implement OpenRouter API call
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      // TODO: Handle OpenRouter response
+
+      controller.close();
+    },
+  });
+
+  return stream;
+};

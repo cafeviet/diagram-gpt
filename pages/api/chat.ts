@@ -1,4 +1,4 @@
-import { OpenAIStream } from "@/lib/utils";
+import { OpenAIStream, OpenRouterStream } from "@/lib/utils";
 import { type RequestBody } from "@/types/type";
 
 export const config = {
@@ -7,9 +7,11 @@ export const config = {
 
 export default async function chat(req: Request) {
   try {
-    const { messages, model, apiKey } = (await req.json()) as RequestBody;
+    const { messages, model, apiKey, useOpenRouter } = (await req.json()) as RequestBody;
 
-    const stream = await OpenAIStream(messages, model, apiKey);
+    const stream = useOpenRouter
+      ? await OpenRouterStream(messages, model, apiKey)
+      : await OpenAIStream(messages, model, apiKey);
 
     return new Response(stream);
   } catch (error) {

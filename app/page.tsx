@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 
-import { apiKeyAtom, modelAtom } from "@/lib/atom";
+import { apiKeyAtom, modelAtom, openRouterAtom } from "@/lib/atom";
 import { Mermaid } from "@/components/Mermaids";
 import { ChatInput } from "@/components/ChatInput";
 import { CodeBlock } from "@/components/CodeBlock";
@@ -15,6 +15,7 @@ import type { OpenAIModel } from "@/types/type";
 export default function Home() {
   const [apiKey, setApiKey] = useAtom(apiKeyAtom);
   const [model, setModel] = useAtom(modelAtom);
+  const [openRouter, setOpenRouter] = useAtom(openRouterAtom);
   const [draftMessage, setDraftMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [draftOutputCode, setDraftOutputCode] = useState<string>("");
@@ -23,12 +24,16 @@ export default function Home() {
   useEffect(() => {
     const apiKey = localStorage.getItem("apiKey");
     const model = localStorage.getItem("model");
+    const openRouter = localStorage.getItem("openRouter");
 
     if (apiKey) {
       setApiKey(apiKey);
     }
     if (model) {
       setModel(model as OpenAIModel);
+    }
+    if (openRouter) {
+      setOpenRouter(openRouter === "true");
     }
   }, []);
 
@@ -54,7 +59,7 @@ export default function Home() {
     setDraftOutputCode("");
 
     const controller = new AbortController();
-    const body: RequestBody = { messages: newMessages, model, apiKey };
+    const body: RequestBody = { messages: newMessages, model, apiKey, useOpenRouter: openRouter };
 
     const response = await fetch("/api/chat", {
       method: "POST",
