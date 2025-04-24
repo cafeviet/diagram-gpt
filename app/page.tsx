@@ -22,6 +22,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draftOutputCode, setDraftOutputCode] = useState<string>("");
   const [outputCode, setOutputCode] = useState<string>("");
+  const [isLocalEdit, setIsLocalEdit] = useState<boolean>(false);
 
   useEffect(() => {
     const apiKey = localStorage.getItem("apiKey");
@@ -111,6 +112,7 @@ export default function Home() {
       setDraftOutputCode((prevCode) => prevCode + chunkValue);
     }
     setOutputCode(parseCodeFromMessage(code));
+    setIsLocalEdit(false);
   };
 
   return (
@@ -134,10 +136,25 @@ export default function Home() {
         </div>
       </div>
       <div className="border w-full md:w-1/2 p-2 flex flex-col">
+        <div className="flex justify-between items-center p-2 border-b">
+          <h2 className="text-lg font-semibold">Mermaid Diagram</h2>
+          <div className="flex items-center">
+            <span className={`px-2 py-1 rounded text-xs mr-2 ${isLocalEdit ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+              {isLocalEdit ? 'Local Edit Mode' : 'AI Generated'}
+            </span>
+          </div>
+        </div>
+        
         <CodeBlock code={draftOutputCode} />
 
         <div className="flex-1 flex justify-center border relative">
-          <Mermaid chart={outputCode} />
+          <Mermaid
+            chart={outputCode}
+            onChartChange={(newChart) => {
+              setOutputCode(newChart);
+              setIsLocalEdit(true);
+            }}
+          />
         </div>
       </div>
     </main>
