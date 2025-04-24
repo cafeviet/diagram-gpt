@@ -185,18 +185,66 @@ export const OpenRouterStream = async (
   return stream;
 };
 
-export const OpenRouterStream2 = async (
+export const DeepSeekStream = async (
   messages: Message[],
   model: string,
   key: string
 ) => {
-  // TODO: Implement OpenRouter API call
+  const system = { role: "system", content: systemPrompt };
+  const res = await fetch(`https://api.deepseek.com/v1/chat/completions`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+    },
+    method: "POST",
+    body: JSON.stringify({
+      model,
+      messages: [system, ...messages],
+      temperature: 0,
+      stream: true,
+    }),
+  });
+
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  if (res.status !== 200) {
+    const statusText = res.statusText;
+    const result = await res.body?.getReader().read();
+    throw new Error(
+      `DeepSeek API returned an error: ${
+        decoder.decode(result?.value) || statusText
+      }`
+    );
+  }
 
   const stream = new ReadableStream({
     async start(controller) {
-      // TODO: Handle OpenRouter response
+      const onParse = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === "event") {
+          const data = event.data;
 
-      controller.close();
+          if (data === "[DONE]") {
+            controller.close();
+            return;
+          }
+
+          try {
+            const json = JSON.parse(data);
+            const text = json.choices[0].delta.content;
+            const queue = encoder.encode(text);
+            controller.enqueue(queue);
+          } catch (e) {
+            controller.error(e);
+          }
+        }
+      };
+
+      const parser = createParser(onParse);
+
+      for await (const chunk of res.body as any) {
+        parser.feed(decoder.decode(chunk));
+      }
     },
   });
 

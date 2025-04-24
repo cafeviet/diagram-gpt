@@ -3,19 +3,21 @@
 import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 
-import { apiKeyAtom, modelAtom, openRouterAtom } from "@/lib/atom";
+import { apiKeyAtom, modelAtom, openRouterAtom, deepSeekAtom, deepSeekModelAtom } from "@/lib/atom";
 import { Mermaid } from "@/components/Mermaids";
 import { ChatInput } from "@/components/ChatInput";
 import { CodeBlock } from "@/components/CodeBlock";
 import { ChatMessage } from "@/components/ChatMessage";
 import type { Message, RequestBody } from "@/types/type";
 import { parseCodeFromMessage } from "@/lib/utils";
-import type { OpenAIModel } from "@/types/type";
+import type { OpenAIModel, DeepSeekModel } from "@/types/type";
 
 export default function Home() {
   const [apiKey, setApiKey] = useAtom(apiKeyAtom);
   const [model, setModel] = useAtom(modelAtom);
+  const [deepSeekModel, setDeepSeekModel] = useAtom(deepSeekModelAtom);
   const [openRouter, setOpenRouter] = useAtom(openRouterAtom);
+  const [deepSeek, setDeepSeek] = useAtom(deepSeekAtom);
   const [draftMessage, setDraftMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [draftOutputCode, setDraftOutputCode] = useState<string>("");
@@ -24,7 +26,9 @@ export default function Home() {
   useEffect(() => {
     const apiKey = localStorage.getItem("apiKey");
     const model = localStorage.getItem("model");
+    const deepSeekModel = localStorage.getItem("deepSeekModel");
     const openRouter = localStorage.getItem("openRouter");
+    const deepSeek = localStorage.getItem("deepSeek");
 
     if (apiKey) {
       setApiKey(apiKey);
@@ -32,8 +36,14 @@ export default function Home() {
     if (model) {
       setModel(model as OpenAIModel);
     }
+    if (deepSeekModel) {
+      setDeepSeekModel(deepSeekModel as DeepSeekModel);
+    }
     if (openRouter) {
       setOpenRouter(openRouter === "true");
+    }
+    if (deepSeek) {
+      setDeepSeek(deepSeek === "true");
     }
   }, []);
 
@@ -59,7 +69,14 @@ export default function Home() {
     setDraftOutputCode("");
 
     const controller = new AbortController();
-    const body: RequestBody = { messages: newMessages, model, apiKey, useOpenRouter: openRouter };
+    const selectedModel = deepSeek ? deepSeekModel : model;
+    const body: RequestBody = {
+      messages: newMessages,
+      model: selectedModel,
+      apiKey,
+      useOpenRouter: openRouter,
+      useDeepSeek: deepSeek
+    };
 
     const response = await fetch("/api/chat", {
       method: "POST",
