@@ -4,15 +4,15 @@ import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 
 import { apiKeyAtom, modelAtom, openRouterAtom, deepSeekAtom, deepSeekModelAtom } from "@/lib/atom";
-import { Mermaid } from "@/components/Mermaids";
+import { PlantUML } from "@/components/PlantUML";
 import { ChatInput } from "@/components/ChatInput";
 import { CodeBlock } from "@/components/CodeBlock";
 import { ChatMessage } from "@/components/ChatMessage";
 import type { Message, RequestBody } from "@/types/type";
-import { parseCodeFromMessage } from "@/lib/utils";
+import { parsePlantUMLCodeFromMessage } from "@/lib/utils";
 import type { OpenAIModel, DeepSeekModel } from "@/types/type";
 
-export default function Home() {
+export default function UMLPage() {
   const [apiKey, setApiKey] = useAtom(apiKeyAtom);
   const [model, setModel] = useAtom(modelAtom);
   const [deepSeekModel, setDeepSeekModel] = useAtom(deepSeekModelAtom);
@@ -24,7 +24,7 @@ export default function Home() {
   const [outputCode, setOutputCode] = useState<string>("");
   const [isLocalEdit, setIsLocalEdit] = useState<boolean>(false);
   const [hideAICode, setHideAICode] = useState<boolean>(false);
-  const [hideMermaidFrame, setHideMermaidFrame] = useState<boolean>(false);
+  const [hideUMLFrame, setHideUMLFrame] = useState<boolean>(false);
 
   useEffect(() => {
     const apiKey = localStorage.getItem("apiKey");
@@ -32,8 +32,8 @@ export default function Home() {
     const deepSeekModel = localStorage.getItem("deepSeekModel");
     const openRouter = localStorage.getItem("openRouter");
     const deepSeek = localStorage.getItem("deepSeek");
-    const hideAICode = localStorage.getItem("hideAICode");
-    const hideMermaidFrame = localStorage.getItem("hideMermaidFrame");
+    const hideAICode = localStorage.getItem("hideAICodeUML");
+    const hideUMLFrame = localStorage.getItem("hideUMLFrame");
 
     if (apiKey) {
       setApiKey(apiKey);
@@ -53,21 +53,21 @@ export default function Home() {
     if (hideAICode) {
       setHideAICode(hideAICode === "true");
     }
-    if (hideMermaidFrame) {
-      setHideMermaidFrame(hideMermaidFrame === "true");
+    if (hideUMLFrame) {
+      setHideUMLFrame(hideUMLFrame === "true");
     }
   }, []);
   
   const toggleHideAICode = () => {
     const newValue = !hideAICode;
     setHideAICode(newValue);
-    localStorage.setItem("hideAICode", newValue.toString());
+    localStorage.setItem("hideAICodeUML", newValue.toString());
   };
   
-  const toggleHideMermaidFrame = () => {
-    const newValue = !hideMermaidFrame;
-    setHideMermaidFrame(newValue);
-    localStorage.setItem("hideMermaidFrame", newValue.toString());
+  const toggleHideUMLFrame = () => {
+    const newValue = !hideUMLFrame;
+    setHideUMLFrame(newValue);
+    localStorage.setItem("hideUMLFrame", newValue.toString());
   };
 
   const handleSubmit = async () => {
@@ -101,7 +101,7 @@ export default function Home() {
       useDeepSeek: deepSeek
     };
 
-    const response = await fetch("/api/chat", {
+    const response = await fetch("/api/uml", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -133,7 +133,9 @@ export default function Home() {
       code += chunkValue;
       setDraftOutputCode((prevCode) => prevCode + chunkValue);
     }
-    setOutputCode(parseCodeFromMessage(code));
+    const parsedCode = parsePlantUMLCodeFromMessage(code);
+    console.log("Parsed PlantUML code:", parsedCode);
+    setOutputCode(parsedCode);
     setIsLocalEdit(false);
   };
 
@@ -159,9 +161,9 @@ export default function Home() {
           </div>
         </div>
       )}
-      <div className={`border w-full p-2 flex flex-col ${hideAICode ? 'md:w-full' : 'md:w-1/2'} ${hideMermaidFrame ? 'hidden' : ''}`}>
+      <div className={`border w-full p-2 flex flex-col ${hideAICode ? 'md:w-full' : 'md:w-1/2'} ${hideUMLFrame ? 'hidden' : ''}`}>
         <div className="flex justify-between items-center p-2 border-b">
-          <h2 className="text-lg font-semibold">Mermaid Diagram</h2>
+          <h2 className="text-lg font-semibold">PlantUML Diagram</h2>
           <div className="flex items-center">
             <button
               className="mr-2 px-2 py-1 rounded text-xs bg-gray-100 hover:bg-gray-200"
@@ -179,25 +181,25 @@ export default function Home() {
         <CodeBlock code={draftOutputCode} />
 
         <div className="flex-1 flex justify-center border relative">
-          <Mermaid
+          <PlantUML
             chart={outputCode}
             onChartChange={(newChart) => {
               setOutputCode(newChart);
               setIsLocalEdit(true);
             }}
-            isHidden={hideMermaidFrame}
+            isHidden={hideUMLFrame}
           />
         </div>
       </div>
       
-      {/* Nút điều khiển hiển thị Mermaid frame */}
+      {/* Nút điều khiển hiển thị UML frame */}
       <div className="fixed bottom-4 right-4 z-10">
         <button
           className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-full shadow-lg flex items-center"
-          onClick={toggleHideMermaidFrame}
-          title={hideMermaidFrame ? "Hiển thị biểu đồ Mermaid" : "Ẩn biểu đồ Mermaid"}
+          onClick={toggleHideUMLFrame}
+          title={hideUMLFrame ? "Hiển thị biểu đồ UML" : "Ẩn biểu đồ UML"}
         >
-          {hideMermaidFrame ? "Hiển thị biểu đồ" : "Ẩn biểu đồ"}
+          {hideUMLFrame ? "Hiển thị biểu đồ" : "Ẩn biểu đồ"}
         </button>
       </div>
     </main>

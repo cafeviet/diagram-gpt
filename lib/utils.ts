@@ -99,6 +99,27 @@ export const parseCodeFromMessage = (message: string) => {
   }
 };
 
+export const parsePlantUMLCodeFromMessage = (message: string) => {
+  // Tìm mã PlantUML trong message
+  // Có thể có từ khóa "plantuml" hoặc không
+  const regex = /```(?:plantuml)?\s*([\s\S]*?)```/;
+  const match = message.match(regex);
+
+  if (match) {
+    return match[1];
+  } else {
+    // Nếu không tìm thấy mã trong dấu ```, thử tìm mã bắt đầu bằng @startuml và kết thúc bằng @enduml
+    const umlRegex = /(@startuml[\s\S]*?@enduml)/;
+    const umlMatch = message.match(umlRegex);
+    
+    if (umlMatch) {
+      return umlMatch[1];
+    } else {
+      return message;
+    }
+  }
+};
+
 export const serializeCode = (code: string) => {
   const state = {
     code: parseCodeFromMessage(code),

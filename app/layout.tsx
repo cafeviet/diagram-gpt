@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { Inter as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { SiteHeader } from "@/components/SiteHeader";
+import { MainMenu } from "@/components/MainMenu";
 
 export const metadata = {
   title: "DiagramGPT",
@@ -32,6 +33,7 @@ export default function RootLayout({
         )}
       >
         <SiteHeader />
+        <MainMenu />
         {children}
 
         <Analytics />

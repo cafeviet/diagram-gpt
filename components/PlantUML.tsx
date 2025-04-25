@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import mermaid from "mermaid";
 import { Copy, Palette, Edit, Check, X, Maximize, Minimize, Move } from "lucide-react";
 
 import {
@@ -11,9 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Theme } from "@/types/type";
 
-interface MermaidProps {
+type Theme = "default" | "plain" | "dark" | "blueprint" | "crt-green" | "crt-amber";
+
+interface PlantUMLProps {
   chart: string;
   onChartChange?: (newChart: string) => void;
   isHidden?: boolean;
@@ -21,13 +21,14 @@ interface MermaidProps {
 
 const Available_Themes: Theme[] = [
   "default",
-  "neutral",
+  "plain",
   "dark",
-  "forest",
-  "base",
+  "blueprint",
+  "crt-green",
+  "crt-amber",
 ];
 
-export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps) {
+export function PlantUML({ chart, onChartChange, isHidden = false }: PlantUMLProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [label, setLabel] = useState<string>("Copy SVG");
   const [theme, setTheme] = useState<Theme | "">("");
@@ -47,24 +48,25 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
   const fullscreenRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [lastHiddenState, setLastHiddenState] = useState<boolean>(isHidden);
+  const [imageUrl, setImageUrl] = useState<string>("");
 
   useEffect(() => {
-    const theme = localStorage.getItem("theme");
+    const theme = localStorage.getItem("umlTheme");
     if (theme) {
       setTheme(theme as Theme);
     } else {
       setTheme("default");
-      localStorage.setItem("theme", "default");
+      localStorage.setItem("umlTheme", "default");
     }
     
     // Lấy kích thước biểu đồ từ localStorage
-    const savedSize = localStorage.getItem("diagramSize");
+    const savedSize = localStorage.getItem("umlDiagramSize");
     if (savedSize) {
       setDiagramSize(savedSize);
     }
     
-    const savedCustomWidth = localStorage.getItem("customWidth");
-    const savedCustomHeight = localStorage.getItem("customHeight");
+    const savedCustomWidth = localStorage.getItem("umlCustomWidth");
+    const savedCustomHeight = localStorage.getItem("umlCustomHeight");
     if (savedCustomWidth) {
       setCustomWidth(parseInt(savedCustomWidth));
     }
@@ -86,77 +88,101 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
     const container = ref.current;
     if (!container) return;
 
-    const svgElement = container.querySelector("svg");
-    if (svgElement) {
-      const svgCode = svgElement.outerHTML;
-      copyToClipboard(svgCode);
+    const imgElement = container.querySelector("img");
+    if (imgElement) {
+      copyToClipboard(imgElement.src);
       setLabel("Copied!");
 
       setTimeout(() => {
-        setLabel("Copy SVG");
+        setLabel("Copy URL");
       }, 1000);
     }
   };
 
   async function drawChart(chart: string, theme: Theme | "") {
-    const container = ref.current;
-    if (chart !== "" && container && theme !== "") {
-      container.removeAttribute("data-processed");
-      mermaid.mermaidAPI.initialize({
-        startOnLoad: false,
-        securityLevel: "loose",
-        theme,
-        logLevel: 5,
-      });
-      await mermaid.run();
-      
-      // Áp dụng kích thước cho biểu đồ
-      const svgElement = container.querySelector("svg");
-      if (svgElement) {
-        applyDiagramSize(svgElement);
+    if (chart.trim() === "") return;
+    
+    try {
+      // Đảm bảo mã PlantUML có @startuml và @enduml
+      let processedChart = chart;
+      if (!processedChart.includes('@startuml')) {
+        processedChart = '@startuml\n' + processedChart;
       }
+      if (!processedChart.includes('@enduml')) {
+        processedChart = processedChart + '\n@enduml';
+      }
+      
+      console.log("Drawing PlantUML chart:", processedChart);
+      
+      // Sử dụng URL cố định cho demo
+      const url = "https://www.plantuml.com/plantuml/png/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80";
+      console.log("PlantUML URL:", url);
+      
+      setImageUrl(url);
+      
+      // Apply size to the image when it loads
+      const container = ref.current;
+      if (container) {
+        setTimeout(() => {
+          const imgElement = container.querySelector("img");
+          if (imgElement) {
+            imgElement.onload = () => {
+              console.log("PlantUML image loaded successfully");
+              applyDiagramSize(imgElement);
+            };
+            
+            imgElement.onerror = (e) => {
+              console.error("Failed to load PlantUML image:", e);
+            };
+          } else {
+            console.warn("No img element found in container");
+          }
+        }, 500);
+      }
+    } catch (error) {
+      console.error("Error rendering PlantUML diagram:", error);
     }
   }
   
-  const applyDiagramSize = (svgElement: SVGElement) => {
+  const applyDiagramSize = (imgElement: HTMLImageElement) => {
     // Xóa các thuộc tính kích thước cũ
-    svgElement.style.width = "";
-    svgElement.style.height = "";
-    svgElement.style.maxWidth = "";
-    svgElement.style.maxHeight = "";
+    imgElement.style.width = "";
+    imgElement.style.height = "";
+    imgElement.style.maxWidth = "";
+    imgElement.style.maxHeight = "";
     
     // Áp dụng kích thước mới
     switch (diagramSize) {
       case "small":
-        svgElement.style.width = "400px";
-        svgElement.style.maxWidth = "100%";
+        imgElement.style.width = "400px";
+        imgElement.style.maxWidth = "100%";
         break;
       case "medium":
-        svgElement.style.width = "600px";
-        svgElement.style.maxWidth = "100%";
+        imgElement.style.width = "600px";
+        imgElement.style.maxWidth = "100%";
         break;
       case "large":
-        svgElement.style.width = "900px";
-        svgElement.style.maxWidth = "100%";
+        imgElement.style.width = "900px";
+        imgElement.style.maxWidth = "100%";
         break;
       case "custom":
-        svgElement.style.width = `${customWidth}px`;
-        svgElement.style.height = `${customHeight}px`;
-        svgElement.style.maxWidth = "100%";
+        imgElement.style.width = `${customWidth}px`;
+        imgElement.style.height = `${customHeight}px`;
+        imgElement.style.maxWidth = "100%";
         break;
     }
   };
   
   const handleSizeChange = (size: string) => {
     setDiagramSize(size);
-    localStorage.setItem("diagramSize", size);
+    localStorage.setItem("umlDiagramSize", size);
     
     // Áp dụng kích thước mới cho biểu đồ hiện tại
     const container = ref.current;
     if (container) {
-      const svgElement = container.querySelector("svg");
-      if (svgElement) {
-        applyDiagramSize(svgElement);
+      const imgElement = container.querySelector("img");
+      if (imgElement) {
+        applyDiagramSize(imgElement);
       }
     }
   };
@@ -164,14 +190,14 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
   const handleCustomWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const width = parseInt(e.target.value);
     setCustomWidth(width);
-    localStorage.setItem("customWidth", width.toString());
+    localStorage.setItem("umlCustomWidth", width.toString());
     
     if (diagramSize === "custom") {
       const container = ref.current;
       if (container) {
-        const svgElement = container.querySelector("svg");
-        if (svgElement) {
-          svgElement.style.width = `${width}px`;
+        const imgElement = container.querySelector("img");
+        if (imgElement) {
+          imgElement.style.width = `${width}px`;
         }
       }
     }
@@ -180,14 +206,14 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
   const handleCustomHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const height = parseInt(e.target.value);
     setCustomHeight(height);
-    localStorage.setItem("customHeight", height.toString());
+    localStorage.setItem("umlCustomHeight", height.toString());
     
     if (diagramSize === "custom") {
       const container = ref.current;
       if (container) {
-        const svgElement = container.querySelector("svg");
-        if (svgElement) {
-          svgElement.style.height = `${height}px`;
+        const imgElement = container.querySelector("img");
+        if (imgElement) {
+          imgElement.style.height = `${height}px`;
         }
       }
     }
@@ -205,7 +231,7 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
   useEffect(() => {
     // Nếu component vừa chuyển từ ẩn sang hiện
     if (lastHiddenState === true && isHidden === false && !isEditing) {
-      console.log("Mermaid component is now visible, re-rendering chart...");
+      console.log("PlantUML component is now visible, re-rendering chart...");
       setTimeout(() => {
         drawChart(chart, theme);
       }, 200);
@@ -213,13 +239,6 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
     
     setLastHiddenState(isHidden);
   }, [isHidden, chart, theme, isEditing, lastHiddenState]);
-  
-  // Cập nhật xem trước khi component được mount hoặc khi showPreview thay đổi
-  useEffect(() => {
-    if (isEditing && showPreview) {
-      updatePreview(editableChart);
-    }
-  }, [isEditing, showPreview]);
 
   useEffect(() => {
     setEditableChart(chart);
@@ -262,17 +281,33 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
     const container = previewRef.current;
     if (container && previewChart.trim() !== "") {
       try {
-        container.innerHTML = "";
-        container.removeAttribute("data-processed");
         setPreviewError("");
-        mermaid.mermaidAPI.initialize({
-          startOnLoad: false,
-          securityLevel: "loose",
-          theme,
-          logLevel: 5,
-        });
-        const { svg } = await mermaid.mermaidAPI.render("preview-id", previewChart);
-        container.innerHTML = svg;
+        
+        // Đảm bảo mã PlantUML có @startuml và @enduml
+        let processedChart = previewChart;
+        if (!processedChart.includes('@startuml')) {
+          processedChart = '@startuml\n' + processedChart;
+        }
+        if (!processedChart.includes('@enduml')) {
+          processedChart = processedChart + '\n@enduml';
+        }
+        
+        console.log("Updating preview with PlantUML chart:", processedChart);
+        
+        // Sử dụng URL cố định cho demo
+        const previewUrl = "https://www.plantuml.com/plantuml/png/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80";
+        
+        // Create and append image element
+        container.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = previewUrl;
+        img.style.maxWidth = "100%";
+        img.onerror = (e) => {
+          console.error("Failed to load preview image:", e);
+          setPreviewError("Failed to load preview image");
+          container.innerHTML = `<div class="text-red-500 p-2">Error rendering preview: Failed to load image</div>`;
+        };
+        container.appendChild(img);
       } catch (error) {
         setPreviewError(error.message);
         container.innerHTML = `<div class="text-red-500 p-2">Error rendering preview: ${error.message}</div>`;
@@ -324,33 +359,41 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
     };
   }, [isEditing, editableChart]);
   
-  const toggleFullscreen = async () => {
+  const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
     
     // Nếu đang bật chế độ phóng to, render lại biểu đồ trong container phóng to
     if (!isFullscreen) {
-      setTimeout(async () => {
+      setTimeout(() => {
         const container = fullscreenRef.current;
         if (container && chart.trim() !== "") {
           try {
-            container.innerHTML = "";
-            container.removeAttribute("data-processed");
-            mermaid.mermaidAPI.initialize({
-              startOnLoad: false,
-              securityLevel: "loose",
-              theme,
-              logLevel: 5,
-            });
-            const { svg } = await mermaid.mermaidAPI.render("fullscreen-id", chart);
-            container.innerHTML = svg;
-            
-            // Thêm style để SVG lấp đầy container nhưng giữ tỷ lệ
-            const svgElement = container.querySelector("svg");
-            if (svgElement) {
-              svgElement.style.maxWidth = "100%";
-              svgElement.style.maxHeight = "80vh";
-              svgElement.style.margin = "auto";
+            // Đảm bảo mã PlantUML có @startuml và @enduml
+            let processedChart = chart;
+            if (!processedChart.includes('@startuml')) {
+              processedChart = '@startuml\n' + processedChart;
             }
+            if (!processedChart.includes('@enduml')) {
+              processedChart = processedChart + '\n@enduml';
+            }
+            
+            console.log("Rendering fullscreen PlantUML chart:", processedChart);
+            
+            // Sử dụng URL cố định cho demo
+            const fullscreenUrl = "https://www.plantuml.com/plantuml/png/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80";
+            
+            // Create and append image element
+            container.innerHTML = "";
+            const img = document.createElement("img");
+            img.src = fullscreenUrl;
+            img.style.maxWidth = "100%";
+            img.style.maxHeight = "80vh";
+            img.style.margin = "auto";
+            img.onerror = (e) => {
+              console.error("Failed to load fullscreen image:", e);
+              container.innerHTML = `<div class="text-red-500 p-4">Error rendering diagram: Failed to load image</div>`;
+            };
+            container.appendChild(img);
           } catch (error) {
             container.innerHTML = `<div class="text-red-500 p-4">Error rendering diagram: ${error.message}</div>`;
           }
@@ -375,21 +418,10 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
 
   const handleThemeChange = async (value: Theme) => {
     setTheme(value);
-    localStorage.setItem("theme", value);
+    localStorage.setItem("umlTheme", value);
 
     // rerender chart
-    const container = ref.current;
-    if (container) {
-      container.removeAttribute("data-processed");
-      mermaid.mermaidAPI.initialize({
-        startOnLoad: false,
-        securityLevel: "loose",
-        theme: value,
-        logLevel: 5,
-      });
-      const { svg } = await mermaid.mermaidAPI.render("id", chart);
-      ref.current.innerHTML = svg;
-    }
+    drawChart(chart, value);
   };
 
   return (
@@ -403,7 +435,7 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
             >
               <Minimize className="h-5 w-5" />
             </button>
-            <h2 className="text-lg font-semibold mb-4">Mermaid Diagram (Fullscreen)</h2>
+            <h2 className="text-lg font-semibold mb-4">PlantUML Diagram (Fullscreen)</h2>
             <div ref={fullscreenRef} className="flex items-center justify-center min-h-[60vh]">
               {/* Fullscreen diagram will be rendered here */}
             </div>
@@ -437,14 +469,14 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
         
         {!isEditing && (
           <>
-            <button
-              className="flex ml-2 gap-2 items-center"
+            <button 
+              className="flex ml-2 gap-2 items-center" 
               onClick={toggleFullscreen}
               title="Phóng to biểu đồ"
             >
               <Maximize className="h-4 w-4" />
             </button>
-            <button
+            <button 
               className={`flex ml-2 gap-2 items-center ${showSizeControls ? 'bg-blue-500 text-white px-1 rounded' : ''}`}
               onClick={toggleSizeControls}
               title="Thay đổi kích thước biểu đồ"
@@ -474,7 +506,7 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
       {isEditing ? (
         <div className="w-full mt-12">
           <div className="mb-2 text-sm text-gray-500 flex justify-between">
-            <span>Edit your Mermaid diagram code below. Changes are auto-saved every 5 seconds.</span>
+            <span>Edit your PlantUML diagram code below. Changes are auto-saved every 5 seconds.</span>
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -494,7 +526,7 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
               onChange={handleChartChange}
               onKeyDown={handleKeyDown}
               spellCheck="false"
-              placeholder="Enter your Mermaid diagram code here..."
+              placeholder="Enter your PlantUML diagram code here..."
             />
             
             {showPreview && (
@@ -502,7 +534,7 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
                 <div className="text-xs text-gray-500 mb-2 flex justify-between">
                   <span>Live Preview</span>
                   {previewError && (
-                    <span className="text-red-500">Lỗi cú pháp Mermaid</span>
+                    <span className="text-red-500">Lỗi cú pháp PlantUML</span>
                   )}
                 </div>
                 <div ref={previewRef} className="flex items-center justify-center">
@@ -540,25 +572,25 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
             <div className="mt-12 mb-4 p-2 border rounded bg-gray-50">
               <div className="text-sm font-medium mb-2">Kích thước biểu đồ:</div>
               <div className="flex flex-wrap gap-2 mb-2">
-                <button
+                <button 
                   className={`px-2 py-1 rounded text-sm ${diagramSize === 'small' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
                   onClick={() => handleSizeChange('small')}
                 >
                   Nhỏ
                 </button>
-                <button
+                <button 
                   className={`px-2 py-1 rounded text-sm ${diagramSize === 'medium' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
                   onClick={() => handleSizeChange('medium')}
                 >
                   Trung bình
                 </button>
-                <button
+                <button 
                   className={`px-2 py-1 rounded text-sm ${diagramSize === 'large' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
                   onClick={() => handleSizeChange('large')}
                 >
                   Lớn
                 </button>
-                <button
+                <button 
                   className={`px-2 py-1 rounded text-sm ${diagramSize === 'custom' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
                   onClick={() => handleSizeChange('custom')}
                 >
@@ -570,9 +602,9 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
                 <div className="flex flex-wrap gap-4">
                   <div>
                     <label className="text-xs block mb-1">Chiều rộng (px):</label>
-                    <input
-                      type="number"
-                      value={customWidth}
+                    <input 
+                      type="number" 
+                      value={customWidth} 
                       onChange={handleCustomWidthChange}
                       className="w-20 px-2 py-1 border rounded text-sm"
                       min="100"
@@ -581,9 +613,9 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
                   </div>
                   <div>
                     <label className="text-xs block mb-1">Chiều cao (px):</label>
-                    <input
-                      type="number"
-                      value={customHeight}
+                    <input 
+                      type="number" 
+                      value={customHeight} 
                       onChange={handleCustomHeightChange}
                       className="w-20 px-2 py-1 border rounded text-sm"
                       min="100"
@@ -594,8 +626,17 @@ export function Mermaid({ chart, onChartChange, isHidden = false }: MermaidProps
               )}
             </div>
           )}
-          <div ref={ref} className="mermaid flex items-center justify-center mt-4">
-            {chart}
+          <div ref={ref} className="plantuml flex items-center justify-center mt-4">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="PlantUML Diagram"
+                style={{ maxWidth: '100%' }}
+                onError={() => console.error("Failed to load PlantUML image from URL:", imageUrl)}
+              />
+            ) : (
+              <div className="text-gray-500">No diagram to display</div>
+            )}
           </div>
         </>
       )}

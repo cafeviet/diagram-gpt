@@ -14,10 +14,14 @@ export const siteConfig: SiteConfig = {
   name: "DiagramGPT",
   description: "Draw diagram with nature language.",
   mainNav: [
-    // {
-    //   title: "Credentials",
-    //   href: "/credentials",
-    // },
+    {
+      title: "Mermaid AI",
+      href: "/",
+    },
+    {
+      title: "UML AI",
+      href: "/uml",
+    },
   ],
   links: {
     twitter: "https://twitter.com/fraserxu",
