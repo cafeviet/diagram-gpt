@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Copy, Palette, Edit, Check, X, Maximize, Minimize, Move } from "lucide-react";
-
+import { encode } from 'plantuml-encoder';
 import {
   Select,
   SelectContent,
@@ -114,8 +114,10 @@ export function PlantUML({ chart, onChartChange, isHidden = false }: PlantUMLPro
       
       console.log("Drawing PlantUML chart:", processedChart);
       
+      // Mã hóa PlantUML bằng cách đơn giản: sử dụng URL với tham số text
+      const encodedContent = encode(processedChart);
       // Sử dụng URL cố định cho demo
-      const url = "https://www.plantuml.com/plantuml/png/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80";
+      const url = `http://localhost:8080/plantuml/png/${encodedContent}`;
       console.log("PlantUML URL:", url);
       
       setImageUrl(url);
@@ -294,9 +296,12 @@ export function PlantUML({ chart, onChartChange, isHidden = false }: PlantUMLPro
         
         console.log("Updating preview with PlantUML chart:", processedChart);
         
+        // Mã hóa PlantUML bằng cách đơn giản: sử dụng URL với tham số text
+        const encodedContent = encode(processedChart);
         // Sử dụng URL cố định cho demo
-        const previewUrl = "https://www.plantuml.com/plantuml/png/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80";
-        
+        const previewUrl = `http://localhost:8080/plantuml/png/${encodedContent}`;
+        console.log("PlantUML URL:", previewUrl);
+
         // Create and append image element
         container.innerHTML = "";
         const img = document.createElement("img");
@@ -379,9 +384,14 @@ export function PlantUML({ chart, onChartChange, isHidden = false }: PlantUMLPro
             
             console.log("Rendering fullscreen PlantUML chart:", processedChart);
             
+            // Mã hóa PlantUML bằng cách đơn giản: sử dụng URL với tham số text
+            const encodedContent = encode(processedChart);
+            console.log("Rendering encode:", encodedContent);
+
             // Sử dụng URL cố định cho demo
-            const fullscreenUrl = "https://www.plantuml.com/plantuml/png/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80";
-            
+            const fullscreenUrl = `http://localhost:8080/plantuml/png/${encodedContent}`;
+            console.log("PlantUML URL:", fullscreenUrl);
+
             // Create and append image element
             container.innerHTML = "";
             const img = document.createElement("img");
