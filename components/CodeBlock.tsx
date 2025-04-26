@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/hover-card";
 
 import { serializeCode } from "@/lib/utils";
+import { appConfig } from "@/config/app.config";
 
 interface Props {
   code: string;
@@ -64,7 +65,7 @@ export const CodeBlock: React.FC<Props> = ({ code }) => {
           </div>
           <div className="flex">
             <Link
-              href={`https://mermaid.live/edit#pako:${serializeCode(code)}`}
+              href={`${appConfig.mermaidLiveUrl}#pako:${serializeCode(code)}`}
               target="_blank"
               rel="noreferrer"
               className="flex ml-auto gap-1 mr-4"

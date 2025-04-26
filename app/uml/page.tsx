@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 
 import { apiKeyAtom, modelAtom, openRouterAtom, deepSeekAtom, deepSeekModelAtom } from "@/lib/atom";
+import { appConfig } from "@/config/app.config";
+import { uiConfig } from "@/config/ui.config";
 import { PlantUML } from "@/components/PlantUML";
 import { ChatInput } from "@/components/ChatInput";
 import { CodeBlock } from "@/components/CodeBlock";
@@ -101,7 +103,7 @@ export default function UMLPage() {
       useDeepSeek: deepSeek
     };
 
-    const response = await fetch("/api/uml", {
+    const response = await fetch(appConfig.apiEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -166,14 +168,18 @@ export default function UMLPage() {
           <h2 className="text-lg font-semibold">PlantUML Diagram</h2>
           <div className="flex items-center">
             <button
-              className="mr-2 px-2 py-1 rounded text-xs bg-gray-100 hover:bg-gray-200"
+              className="mr-2 px-2 py-1 rounded text-xs hover:opacity-90 transition-opacity"
+              style={{
+                backgroundColor: uiConfig.theme.background.light,
+                color: uiConfig.theme.secondaryColor
+              }}
               onClick={toggleHideAICode}
               title={hideAICode ? "Hiển thị phần AI code" : "Ẩn phần AI code"}
             >
-              {hideAICode ? "Hiển thị AI code" : "Ẩn AI code"}
+              {hideAICode ? uiConfig.language.showAICode : uiConfig.language.hideAICode}
             </button>
             <span className={`px-2 py-1 rounded text-xs mr-2 ${isLocalEdit ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-              {isLocalEdit ? 'Local Edit Mode' : 'AI Generated'}
+              {isLocalEdit ? uiConfig.language.localEditMode : uiConfig.language.aiGenerated}
             </span>
           </div>
         </div>
@@ -195,11 +201,14 @@ export default function UMLPage() {
       {/* Nút điều khiển hiển thị UML frame */}
       <div className="fixed bottom-4 right-4 z-10">
         <button
-          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-full shadow-lg flex items-center"
+          className="text-white px-3 py-2 rounded-full shadow-lg flex items-center hover:opacity-90 transition-opacity"
+          style={{
+            backgroundColor: uiConfig.theme.accentColor
+          }}
           onClick={toggleHideUMLFrame}
           title={hideUMLFrame ? "Hiển thị biểu đồ UML" : "Ẩn biểu đồ UML"}
         >
-          {hideUMLFrame ? "Hiển thị biểu đồ" : "Ẩn biểu đồ"}
+          {hideUMLFrame ? uiConfig.language.showDiagram : uiConfig.language.hideDiagram}
         </button>
       </div>
     </main>
