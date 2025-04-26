@@ -3,7 +3,15 @@
 import { useEffect, useState } from "react";
 import { useAtom } from "jotai";
 
-import { apiKeyAtom, modelAtom, openRouterAtom, deepSeekAtom, deepSeekModelAtom } from "@/lib/atom";
+import {
+  apiKeyAtom,
+  modelAtom,
+  openRouterAtom,
+  deepSeekAtom,
+  deepSeekModelAtom,
+  hideAICodeAtom,
+  hideMermaidFrameAtom
+} from "@/lib/atom";
 import { Mermaid } from "@/components/Mermaids";
 import { ChatInput } from "@/components/ChatInput";
 import { CodeBlock } from "@/components/CodeBlock";
@@ -23,52 +31,11 @@ export default function Home() {
   const [draftOutputCode, setDraftOutputCode] = useState<string>("");
   const [outputCode, setOutputCode] = useState<string>("");
   const [isLocalEdit, setIsLocalEdit] = useState<boolean>(false);
-  const [hideAICode, setHideAICode] = useState<boolean>(false);
-  const [hideMermaidFrame, setHideMermaidFrame] = useState<boolean>(false);
-
-  useEffect(() => {
-    const apiKey = localStorage.getItem("apiKey");
-    const model = localStorage.getItem("model");
-    const deepSeekModel = localStorage.getItem("deepSeekModel");
-    const openRouter = localStorage.getItem("openRouter");
-    const deepSeek = localStorage.getItem("deepSeek");
-    const hideAICode = localStorage.getItem("hideAICode");
-    const hideMermaidFrame = localStorage.getItem("hideMermaidFrame");
-
-    if (apiKey) {
-      setApiKey(apiKey);
-    }
-    if (model) {
-      setModel(model as OpenAIModel);
-    }
-    if (deepSeekModel) {
-      setDeepSeekModel(deepSeekModel as DeepSeekModel);
-    }
-    if (openRouter) {
-      setOpenRouter(openRouter === "true");
-    }
-    if (deepSeek) {
-      setDeepSeek(deepSeek === "true");
-    }
-    if (hideAICode) {
-      setHideAICode(hideAICode === "true");
-    }
-    if (hideMermaidFrame) {
-      setHideMermaidFrame(hideMermaidFrame === "true");
-    }
-  }, []);
+  const [hideAICode, setHideAICode] = useAtom(hideAICodeAtom);
+  const [hideMermaidFrame, setHideMermaidFrame] = useAtom(hideMermaidFrameAtom);
   
-  const toggleHideAICode = () => {
-    const newValue = !hideAICode;
-    setHideAICode(newValue);
-    localStorage.setItem("hideAICode", newValue.toString());
-  };
-  
-  const toggleHideMermaidFrame = () => {
-    const newValue = !hideMermaidFrame;
-    setHideMermaidFrame(newValue);
-    localStorage.setItem("hideMermaidFrame", newValue.toString());
-  };
+  const toggleHideAICode = () => setHideAICode(prev => !prev);
+  const toggleHideMermaidFrame = () => setHideMermaidFrame(prev => !prev);
 
   const handleSubmit = async () => {
     if (!apiKey) {
