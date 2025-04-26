@@ -51,3 +51,14 @@ Chỉnh sửa mã PlantUML trực tiếp trên trình duyệt
 Xem trước biểu đồ trong khi chỉnh sửa
 Phóng to và thay đổi kích thước biểu đồ
 Bây giờ tính năng PlantUML đã được cài đặt đầy đủ và hoạt động đúng cách.
+
+## Memory Bank
+
+Dự án sử dụng memory bank để quản lý ngữ cảnh và tiến độ phát triển, bao gồm:
+- productContext.md: Tổng quan dự án
+- activeContext.md: Trạng thái hiện tại
+- progress.md: Tiến độ công việc
+- decisionLog.md: Nhật ký quyết định
+- systemPatterns.md: Mẫu hệ thống
+
+Các file này được lưu trong thư mục memory-bank/
